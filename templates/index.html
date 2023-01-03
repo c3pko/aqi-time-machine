@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html>
+  
+<head>
+    <style>
+        
+        .ui-datepicker {
+            width: 8em; 
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        h2{
+            color:black;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #table {
+            font-family: Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        #table td, #table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        
+        #table tr:nth-child(even){background-color: #f2f2f2;}
+        
+        #table tr:hover {background-color: #ddd;}
+        
+        #table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #04AA6D;
+            color: white;
+        }
+
+        # chartContainer {
+            height: 300px;
+            width: 100%;
+        }
+
+    </style>
+
+    <link href=
+'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/ui-lightness/jquery-ui.css' 
+          rel='stylesheet'>
+</head>
+  
+<script>
+    async function loadChart() {
+        event.preventDefault();
+
+        console.log(aqi_data);
+        length = aqi_data.length;
+        sensor_city = aqi_data[0].sensor_city
+        start_date = aqi_data[0].date
+        end_date = aqi_data[length-1].date
+       
+        var pm25_data_points = []; 
+        var pm10_data_points = [];
+        var o3_data_points = [];
+        var no2_data_points = [];
+        var so2_data_points = [];
+        var co_data_points = [];
+        var aqi_data_points = [];
+
+        for(i=0;i<length;i++) {
+            pm25_data_points.push({x: new Date(aqi_data[i].date), y: aqi_data[i].pm25})
+            pm10_data_points.push({x: new Date(aqi_data[i].date), y: aqi_data[i].pm10})
+            o3_data_points.push({x: new Date(aqi_data[i].date), y: aqi_data[i].o3})
+            no2_data_points.push({x: new Date(aqi_data[i].date), y: aqi_data[i].no2})
+            so2_data_points.push({x: new Date(aqi_data[i].date), y: aqi_data[i].so2})
+            co_data_points.push({x: new Date(aqi_data[i].date), y: aqi_data[i].co})
+            aqi_data_points.push({x: new Date(aqi_data[i].date), y: aqi_data[i].aqi})
+        }
+
+        
+        var chart = new CanvasJS.Chart("chartContainer", {
+            theme: "light2", // "light1", "light2", "dark1", "dark2"
+            animationEnabled: true,
+            title:{
+                text: "AQI Data for " + sensor_city
+            },
+            subtitles: [{
+                text: "Date Range: From " + start_date + " To " + end_date
+            }],
+            axisX: {
+                lineColor: "black",
+                labelFontColor: "black"
+            },
+            axisY2: {
+                gridThickness: 0,
+                title: "Particulate concentration",
+                suffix: "",
+                titleFontColor: "black",
+                labelFontColor: "black"
+            },
+            legend: {
+                cursor: "pointer",
+                itemmouseover: function(e) {
+                    e.dataSeries.lineThickness = e.chart.data[e.dataSeriesIndex].lineThickness * 2;
+                    e.dataSeries.markerSize = e.chart.data[e.dataSeriesIndex].markerSize + 2;
+                    e.chart.render();
+                },
+                itemmouseout: function(e) {
+                    e.dataSeries.lineThickness = e.chart.data[e.dataSeriesIndex].lineThickness / 2;
+                    e.dataSeries.markerSize = e.chart.data[e.dataSeriesIndex].markerSize - 2;
+                    e.chart.render();
+                },
+                itemclick: function (e) {
+                    if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                        e.dataSeries.visible = false;
+                    } else {
+                        e.dataSeries.visible = true;
+                    }
+                    e.chart.render();
+                }
+            },
+            toolTip: {
+                shared: true
+            },
+
+            data: [{
+                type: "spline",
+                name: "pm25",
+                markerSize: 5,
+                axisYType: "secondary",
+                xValueFormatString: "YYYY",
+                showInLegend: true,
+                dataPoints: pm25_data_points
+            },
+            {
+                type: "spline",
+                name: "pm10",
+                markerSize: 5,
+                axisYType: "secondary",
+                xValueFormatString: "YYYY",
+                showInLegend: true,
+                dataPoints: pm10_data_points
+            },
+            {
+                type: "spline",
+                name: "o3",
+                markerSize: 5,
+                axisYType: "secondary",
+                xValueFormatString: "YYYY",
+                showInLegend: true,
+                dataPoints: o3_data_points
+            },
+            {
+                type: "spline",
+                name: "no2",
+                markerSize: 5,
+                axisYType: "secondary",
+                xValueFormatString: "YYYY",
+                showInLegend: true,
+                dataPoints: no2_data_points
+            },
+            {
+                type: "spline",
+                name: "so2",
+                markerSize: 5,
+                axisYType: "secondary",
+                xValueFormatString: "YYYY",
+                showInLegend: true,
+                dataPoints: so2_data_points
+            },
+            {
+                type: "spline",
+                name: "aqi",
+                markerSize: 5,
+                axisYType: "secondary",
+                xValueFormatString: "YYYY",
+                showInLegend: true,
+                dataPoints: aqi_data_points
+            }
+            ]
+        });
+        chart.render();
+        //var chart_element = document.getElementById("chartContainer");
+        //if (chart_element.style.display === "none") {
+          //  chart_element.style.display = "block";
+      //  } else {
+       //     chart_element.style.display = "none";
+     //   }
+        
+        }
+    </script>
+
+<body onload="getSensorCity(); hideUserElements();">
+
+    <div id="chartContainer" style="height: 300px; width: 100%;"></div>
+
+
+    <script type="text/javascript">
+
+        async function hideUserElements() {
+            console.log("hiding user elements");
+            var elements_to_check = [document.getElementById("select_city"), document.getElementById("my_date_picker1"), document.getElementById("my_date_picker2")]
+            for (element in elements_to_check) {
+                if (element.style.display === "none") {
+                    element.style.display = "block";
+                } else {
+                    element.style.display = "none";
+                }
+            }    
+        }
+
+        async function hideChart() {
+            var chart_element = document.getElementById("chartContainer");
+                if (chart_element.style.display === "none") {
+                    chart_element.style.display = "block";
+                } else {
+                    chart_element.style.display = "none";
+                }
+        }
+
+        async function getSensorCity() {
+        var sensor_city_locations_db = await fetch('/get_sensor_cities')
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (json) {
+                console.log('GET response as JSON:');
+                console.log(json);
+                const sensor_city_locations_db = Object.values(json["sensor_city"]);
+                console.log(sensor_city_locations_db);
+                return sensor_city_locations_db;
+            })
+        window.sensor_city_locations_db = sensor_city_locations_db;
+        console.log(window.sensor_city_locations_db);
+        
+        add_city_options_to_dropdown();
+    }
+    </script>
+
+
+        
+    <script src="js/app.js"></script>
+    <center>
+        
+        <div id="select_city">
+            <h3> AQI Time Travel Machine </h3>
+            <h4> See historical AQI data for your city of interest by selecting a sensor location and date range </h4> 
+            <h5> Note: This is meant as a lightweight Flask UI example and is currently only showing data from 7 sensor sites </h5>
+            <label> Select City: 
+                
+                    <select id="city_dropdown">
+                    </select>
+                </label>
+            </div id="select_city"> 
+            
+        
+        <div id="date_picker">
+            <label> Start Date: <input type="text" id="my_date_picker1">  </input> </label>
+            <label> End Date: <input type="text" id="my_date_picker2"> </input> </label>
+        </div id="date_picker">
+       
+           
+
+            <script>
+            
+                
+                var user_selected_data;
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0');
+                var yyyy = today.getFullYear();
+                today = mm + '-' + dd + '-' + yyyy;
+                console.log(" today = ",today);
+
+                function add_city_options_to_dropdown() {
+                    //var city_list = main();
+                    //console.log(window.sensor_city_locations_db);
+                    console.log(sensor_city_locations_db);
+                    //console.log("adding city options");
+                    var cities = sensor_city_locations_db;
+                    var select = document.getElementById("city_dropdown");
+                    for (var i = 0; i < cities.length; i++) {
+                        var optn = cities[i];
+                        var el = document.createElement("option");
+                        el.textContent = optn;
+                        el.value = optn;
+                        select.appendChild(el);
+                    }  
+                }
+
+            </script>                                          
+       
+
+         
+            <form action="" method="post">
+                <input type="submit" id="submitButton" name="Submit" onmouseover=""/>
+            </form>
+
+            <div class="container">
+
+                <div id="table-wrapper">
+                    
+                      <table id="table">
+                          <tr>
+                            <th>Sensor City</th>
+                            <th>Date</th>
+                            <th>PM25</th>
+                            <th>PM10</th>
+                            <th>O3</th>
+                            <th>NO2</th>
+                            <th>SO2</th>
+                            <th>CO</th>
+                            <th>AQI</th>
+                            <th>AQI Classification </th>
+                          </tr>                       
+                    </table>
+                </div>
+                    
+             </div>
+
+            <script>
+
+                const submit_button = document.getElementById("submitButton");
+                submit_button.addEventListener("click", getSelection);
+
+                function getSelection() {
+                    document.getElementById("select_city").hidden = true;
+                    document.getElementById("my_date_picker1").hidden = true;
+                    document.getElementById("my_date_picker2").hidden = true;
+                    document.getElementById("date_picker").hidden = true;
+                    document.getElementById("submitButton").hidden = true;
+                    
+
+                    var selected = city_dropdown;
+                    console.log("getting value by variable id: ", selected.value);
+    
+                    user_selected_city = document.querySelector('#city_dropdown');
+                    city_output = user_selected_city.value;
+                    console.log("city selected by query selector: ", city_output);
+                    //document.querySelector('.user_selected_city').textContent = city_output;
+    
+                    user_selected_start_date = document.querySelector('#my_date_picker1');
+                    start_date_output = user_selected_start_date.value;
+                    console.log("start date selected by query selector: ", start_date_output);
+                    //document.querySelector('.user_selected_start_date').textContent = start_date_output;
+
+                    user_selected_end_date = document.querySelector('#my_date_picker2');
+                    end_date_output = user_selected_end_date.value;
+                    console.log("end date selected by query selector: ", end_date_output);
+                    //document.querySelector('.user_selected_end_date').textContent = end_date_output;
+                    //user_selected_city_output = document.querySelector('.user_selected_city');
+                    //console.log("output city1   =", user_selected_city_output.textContent);
+
+                    //user_selected_city_output = document.querySelector('.user_selected_city').textContent;
+                    //user_selected_start_date = document.querySelector('.user_selected_start_date').textContent;
+                    //user_selected_end_date = document.querySelector('.user_selected_end_date').textContent;
+ 
+                    user_selected_data = {
+                        "city": city_output,
+                        "start_date": start_date_output,
+                        "end_date": end_date_output
+                    };
+                                            
+                    console.log(user_selected_data);
+
+                    //user_selected_city = document.getElementById('city_dropdown').innerHTML;
+                    }
+
+            </script>
+
+
+        <script>
+            function fakeClick(){
+                alert("in fake click");
+                document.getElementById("submitButton").click();
+
+            }
+        </script>
+        
+
+        </div>
+        
+
+
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js">
+        </script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js">
+        </script>
+        <script src="dist/table-renderer.js"></script>
+        <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+        
+
+        <script>
+            function ready() {
+                
+
+                $(function() {
+                    $("#my_date_picker1").datepicker({
+                        dateFormat: 'mm-dd-yy',
+                        defaultDate: '12-20-22'
+                    });
+                });
+
+                $(function() {
+                    $("#my_date_picker2").datepicker({
+                        dateFormat: 'mm-dd-yy',
+                        defaultDate: today
+                    });
+                });
+
+                $('#my_date_picker1').change(function() {
+                    startDate = $(this).datepicker('getDate');
+                    $("#my_date_picker2").datepicker("option", "minDate", startDate);
+                })
+
+                $('#my_date_picker2').change(function() {
+                    endDate = $(this).datepicker('getDate');
+                    $("#my_date_picker1").datepicker("option", "maxDate", endDate);
+                })
+    
+                
+                $(function getAqiData() {
+                   
+                    $("#submitButton").click(function bar(){
+                        event.preventDefault();
+                        
+                        console.log(user_selected_data);
+
+                        $.ajax({
+                            url: '/get_aqi_data',
+                            type: 'POST',
+                            data: user_selected_data,
+                            success: function(response) {
+                                var aqi_data = JSON.parse(response);
+                                window.aqi_data = aqi_data;
+                                console.log(aqi_data);
+                                length = aqi_data.length;
+                                var temp = "";
+                                for(i=0;i<length;i++)
+                                    {
+                                        temp+="<tr>";
+                                        temp+="<td>"+aqi_data[i].sensor_city+"</td>";
+                                        temp+="<td>"+aqi_data[i].date+"</td>";
+                                        temp+="<td>"+aqi_data[i].pm25+"</td>";
+                                        temp+="<td>"+aqi_data[i].pm10+"</td>";
+                                        temp+="<td>"+aqi_data[i].o3+"</td>";
+                                        temp+="<td>"+aqi_data[i].no2+"</td>";
+                                        temp+="<td>"+aqi_data[i].so2+"</td>";
+                                        temp+="<td>"+aqi_data[i].co+"</td>";
+                                        temp+="<td>"+aqi_data[i].aqi+"</td>";
+                                        temp+="<td>"+aqi_data[i].aqi_classification+"</td>";
+                                    }
+                                $('#table').append(temp);
+                                
+                                loadChart();
+                                
+                                //document.getElementById("data").innerHTML=temp;
+                                }
+                        });
+                           
+                    });
+                })
+            }
+
+
+
+        </script>
+
+        <script>
+            $(document).ready(ready);
+        </script>
+    </center>
+</body>
+  
+</html>

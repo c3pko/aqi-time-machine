@@ -1,0 +1,23 @@
+Steps to setup this project:
+
+Step 1: Clone this repo and pip install requirements.txt
+Step 2: Download pgAdmin https://www.pgadmin.org/download/ and create your Postgres database
+Step 3: Add your database credentials info to config.py
+Step 4: Run "await add_test_data()" to load sample AQI data to your Postgres database the first time you run your app
+Step 5: In all other instances, run "run app.run(port=8000, debug=True)"
+Step 6: Navigate over to your localhost (e.g. http://127.0.0.1:8000) and interact with the app as you please
+Step 7: If you'd like to download additional historical AQI data you can do so over at https://aqicn.org/data-platform/register/
+
+
+Purpose of this project:
+
+To build the "Time travel Machine - for seeing the air quality at any day back in time" mentioned here: https://aqicn.org/contribute/.
+
+Future developments:
+1. Error handling
+2. Check for and fetch new data for target sensor cities
+3. Cache most popular user queries  
+4. Show historical mean and median for all available particulate types in user query
+5. Show pie chart with AQI classification frequency
+6. Allow user who may not know exact sensor station name to search by city to find station name
+
