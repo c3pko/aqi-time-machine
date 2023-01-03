@@ -163,11 +163,13 @@ def query_existing_table(sensor_city, start_date, end_date):
 
     #config.CONNECTION.autocommit = True
     new_cursor = new_connection.cursor()
+    #get_unique_cities = """SELECT DISTINCT sensor_city FROM aqi_history_table """                
     get_data_by_city_only = """SELECT * FROM aqi_history_table WHERE sensor_city = '""" + sensor_city + """' """                
+    get_data_by_dates_only = """SELECT * FROM public.aqi_history_table WHERE date >= '""" + start_date + """' """ + """ AND date <= '""" + end_date + """' """
     get_data_by_all_variables = """SELECT * FROM public.aqi_history_table WHERE sensor_city =  '""" + sensor_city + """' """ + """ AND date >= '""" + start_date + """' """ + """ AND date <= '""" + end_date + """' """
 
-    print("query: ", get_data_by_all_variables)
-    new_cursor.execute(get_data_by_all_variables)
+    print("query: ", get_data_by_dates_only)
+    new_cursor.execute(get_data_by_dates_only)
     new_connection.commit()
     names = [ x[0] for x in new_cursor.description]
     rows = new_cursor.fetchall()
@@ -263,7 +265,6 @@ def aqi_category_mapping(df):
     values = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very unhealthy", "Hazardous", "Not possible"]
     df["aqi_classification"] = np.select(conditions, values)
     df.head()
-    print(df)
     return df
 
 def create_no2_table(aqi_table):
@@ -629,7 +630,7 @@ async def query_db_with_user_inputs(sensor_city, start_date, end_date):
     
     
     
-def add_sample_data(df, sensor_city):
+def add_sample_data(df, sensor_city):    
     
     all_particulate_types = ["pm25", "pm10", "o3", "no2", "so2", "co"]
     copy_df = df
@@ -640,13 +641,14 @@ def add_sample_data(df, sensor_city):
     only_numeric_col_names = list(df.columns.values)
     only_numeric_col_names.remove('date')
     columns_to_add_later = list(set(all_particulate_types) - set(only_numeric_col_names))  #in order to have a full dataset
-
-        
-    only_numeric_columns = df[only_numeric_col_names]
-        
     df = df[only_numeric_col_names].apply(lambda x: x.str.strip()).replace('',  None) #np.nan)    
     
-    df["aqi"] = only_numeric_columns.max(axis=1).astype(int) #aqi is calculated as max(pm25, pm10, o3, etc) so take max aqi for each particulate for each day
+    #fixing error where max aqi wasn't being found by changing series objects to floats before finding max
+    for particulate_type in only_numeric_col_names:
+        #df[particulate_type] = pd.to_numeric(df[particulate_type])
+        df[particulate_type] = pd.to_numeric(df[particulate_type], errors='coerce').astype('Int64')
+
+    df["aqi"] = df[only_numeric_col_names].max(axis=1).astype(int) #aqi is calculated as max(pm25, pm10, o3, etc) so take max aqi for each particulate for each day
     copy_df["date"] = copy_df["date"].astype(str)
     df.insert(0, "date", copy_df["date"])
     df.insert(1, "sensor_city", sensor_city)
@@ -655,10 +657,17 @@ def add_sample_data(df, sensor_city):
             index_to_insert = all_particulate_types.index(particulate_type) + 2
             df.insert(index_to_insert, particulate_type, None)        
     
-    df = aqi_category_mapping(df) 
+    df = aqi_category_mapping(df)
+    
+    #converting floats back to ints
+    df = df.replace(np.nan, None)
+    df[all_particulate_types] = df[all_particulate_types].fillna(0).astype(int) #can't convert from NoneType to int so first replace Nones with 0s
+    df[all_particulate_types] = df[all_particulate_types].astype(int) #then convert Series to ints
+    df = df.replace(0, None) #then replace 0s with NoneTypes
     json_data = df.to_dict('records')
     # [{'date': '2022-12-02', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '31', 'pm10': '14', 'o3': '27', 'no2': nan, 'so2': nan, 'aqi': 31}, {'date': '2022-12-03', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '22', 'pm10': '21', 'o3': '12', 'no2': nan, 'so2': nan, 'aqi': 22}, {'date': '2022-12-04', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '48', 'pm10': '15', 'o3': '19', 'no2': nan, 'so2': nan, 'aqi': 48}, {'date': '2022-12-05', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '40', 'pm10': '16', 'o3': '28', 'no2': nan, 'so2': nan, 'aqi': 40}, {'date': '2022-12-06', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '33', 'pm10': '14', 'o3': '28', 'no2': nan, 'so2': nan, 'aqi': 33}, {'date': '2022-12-07', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '29', 'pm10': '13', 'o3': '29', 'no2': nan, 'so2': nan, 'aqi': 29}, {'date': '2022-12-08', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '27', 'pm10': '15', 'o3': '28', 'no2': nan, 'so2': nan, 'aqi': 28}, {'date': '2022-12-09', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '30', 'pm10': '18', 'o3': '26', 'no2': nan, 'so2': nan, 'aqi': 30}, {'date': '2022-12-10', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '38', 'pm10': '18', 'o3': '25', 'no2': nan, 'so2': nan, 'aqi': 38}, {'date': '2022-12-11', 'sensor_city': 'san-diego - sherman elementary school', 'pm25': '42', 'pm10': '16', 'o3': '25', 'no2': nan, 'so2': nan, 'aqi': 42}]
     # example of what data should look like before inserting into table
+    print("adding to table...\n", df)
     add_to_aqi_table(json_data)
         
 def delete_db():
@@ -682,7 +691,7 @@ async def add_test_data():
                 {"file_name": "aqi_csv_data/paris-air-quality.csv", "sensor_city":"paris"}
             ]
     for row in files_and_sensor_cities:
-        #print("adding data from \n" + row + "\nto the table")
+        print("adding data to table from: \n", row)
         file_name = row["file_name"]
         sensor_city = row["sensor_city"]
         df = pd.read_csv(file_name, index_col=False)
@@ -699,7 +708,9 @@ async def add_test_data():
      
 async def main():
     
-    app.run(port=8000, debug=True)
+    await add_test_data()
+
+    #app.run(port=8000, debug=True)
     
     #if it's youre first run, run await add_test_data()
     #in all other instances, run app.run(port=8000, debug=True)
