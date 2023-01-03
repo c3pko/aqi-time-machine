@@ -3,8 +3,8 @@ Steps to setup this project:
 Step 1: Clone this repo and pip install requirements.txt
 Step 2: Download pgAdmin https://www.pgadmin.org/download/ and create your Postgres database
 Step 3: Add your database credentials info to config.py
-Step 4: Run "await add_test_data()" to load sample AQI data to your Postgres database the first time you run your app
-Step 5: In all other instances, run "run app.run(port=8000, debug=True)"
+Step 4: In display_aqi_for_city_and_date.py, run "await add_test_data()" to load sample AQI data to your Postgres database the first time you run your app
+Step 5: In all other instances, run "run app.run(port=8000, debug=True)" (also in display_aqi_for_city_and_date.py)
 Step 6: Navigate over to your localhost (e.g. http://127.0.0.1:8000) and interact with the app as you please
 Step 7: If you'd like to download additional historical AQI data you can do so over at https://aqicn.org/data-platform/register/
 
