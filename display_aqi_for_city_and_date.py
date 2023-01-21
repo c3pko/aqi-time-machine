@@ -616,10 +616,12 @@ async def query_db_with_user_inputs(sensor_city, start_date, end_date):
 
     new_cursor = new_connection.cursor()
     get_data_by_city_only = """SELECT * FROM aqi_history_table WHERE sensor_city = '""" + sensor_city + """' """                
-    get_data_by_all_variables = """SELECT * FROM public.aqi_history_table WHERE sensor_city =  '""" + sensor_city + """' """ + """ AND date >= '""" + start_date + """' """ + """ AND date <= '""" + end_date + """' """
+    get_data_by_all_variables = """SELECT * FROM public.aqi_history_table WHERE sensor_city =  '""" + sensor_city + """' """ + """ AND date >= '""" + start_date + """' """ + """ AND date <= '""" + end_date + """' ORDER BY DATE"""
+    print("querying database with following query: \n", get_data_by_all_variables)
     new_cursor.execute(get_data_by_all_variables)
     new_connection.commit()
     
+    #in future add way to sort data by date in Python instead of relying on Postgres query to sort data for you
     result = engine.execute(get_data_by_all_variables)
     json_data = json.dumps([dict(r) for r in result], default=alchemyencoder)
     print(" json data: \n", json_data)
@@ -704,7 +706,19 @@ async def add_test_data():
     end_date = '2022-12-08'
     query_existing_table(sensor_city, start_date, end_date)
  
-
+async def testing():
+    """things to test (that may or may not yet exist in code):
+    1. Data loaded from CSVs is being accurately loaded
+    2. Data from CSVs is being cleaned properly--handling NAs/mismatching format types
+    3. User inputs are being handled properly when there are errors. Examples:
+        a. user doesn't make any selection
+        b. user selects dates out of range of data
+    4. User inputs are being sent accurately from frontend to backend server
+    5. User inputs are being used correctly (selecting correct city and date range)
+    6. User query is being sorted by date correctly
+    7. Table sorting works as expected
+    
+    """
      
 async def main():
     
